@@ -1,0 +1,172 @@
+---
+title: "185314135_Budi_Aglomerative"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Melakukan instalasi(apabila library belom ada) dan memanggil library yang akan digunakan pada praktikum kali ini. adapun library yang akan digunakan adalah:
+
+1. readr
+2. dplyr
+3. DT
+```{r}
+library(readr)  #Membaca data
+library(dplyr)  #Data processing
+library(DT)     #Menampilkan tabel agar mudah dilihat di browser
+```
+
+### Library yang dibutuhkan untuk aglomeratif clustering
+Setelah memanggil library umum selanjutnya adalah memanggil library untuk membangun metode aglomerative yaitu dengan menggunakan library:
+
+1. stats
+2. cluster
+```{r}
+library(stats)
+library(cluster) #untuk melakukan cluster
+```
+
+#Pertama meng-input data 
+```{r}
+dataaglo <- read.csv("contohsoal.csv",sep=",")
+str(dataaglo)
+dataaglo
+```
+
+unselect kolom Lokasi karena tidak diperlukan
+```{r}
+dataaglo <- dataaglo[-1]
+```
+
+### Menghitung Matriks Distance
+Matriks distance merupakan matriks yang berisikan pasangan jarak antar objek yang dihitung dengan Manhattan Distance. Dalam R, matriks distance dapat dihitung dengan menggunakan fungsi dist(). Berikut adalah matriks distance untuk dataaglo.
+```{r}
+#library(manhattanly)
+d <- dist(dataaglo, method = "manhattan")
+d
+```
+
+### Memulai Analisis Klaster
+### Metode 1. Single Linkage
+Untuk melakukan metode Single Linkage, dalam R dapat menggunakan fungsi hclust() kemudian memasukkan argument ‘single’ pada parameter ‘method’
+```{r}
+hc_single <- hclust(d = d, method = "single")
+hc_single
+```
+
+#MEMBUAT DENDOGRAM
+Ketika menggunakan R, untuk membuat dendogram cukup dengan menggunakan fungsi plot(); sedangkan ketika menghitung manual dengan cara membuat plot antara objek/pengamatan dan mengubungkannya ketika antar objek/pengamatan tergabung menjadi satu klaster berdasarkan jarak minimum yang telah dihitung.
+```{r}
+plot(hc_single, hang = -1) #Menampilkan Dendogram
+```
+Dari gambaran dendogram diatas dapat kita lihat
+Pertama :Data 6, data 3, data 5 menjadi 1 cluster dengan jarak terdekat 2
+Kedua : Data 4, data 8 menjadi 1 cluster dengan jarak terdekat 2
+Ketiga : Data 48, data 1 menjadi 1 cluster dengan jarak terdekat 3
+Keempat :Data 2, data 7 menjadi 1 cluster dengan jarak terdekat 4
+Terakhir : Data (6, 3, 5),data (4, 8, 1), data (2, 7) menjadi 1 cluster dengan jarak terdekat 5
+
+Sehingga dapat disimpulkan data yang ada pada dataaglo merupakan data yang berada dalam 1 cluster tunggal.
+
+### Metode 2. Complete Linkage
+Untuk melakukan metode Complete Linkage, dalam R dapat menggunakan fungsi hclust() kemudian memasukkan argument ‘complete’ pada parameter ‘method’.
+```{r}
+hc_complete <- hclust(d = d, method = "complete")
+hc_complete
+```
+
+#MEMBUAT DENDOGRAM
+Ketika menggunakan R, untuk membuat dendogram cukup dengan menggunakan fungsi plot(); sedangkan ketika menghitung manual dengan cara membuat plot antara objek/pengamatan dan mengubungkannya ketika antar objek/pengamatan tergabung menjadi satu klaster berdasarkan jarak minimum yang telah dihitung.
+```{r}
+plot(hc_complete, cex = 0.6, hang = -1) #Menampilkan Dendogram
+abline(h = 4, col = 'red')
+```
+Dari gambaran dendogram diatas dapat kita lihat
+Pertama :Data 4, data 8 menjadi 1 cluster dengan jarak terdekat 2 Kedua : Data 6, data 3, data 5 menjadi 1 cluster dengan jarak terdekat 2
+Ketiga : Data 2, data 7 menjadi 1 cluster dengan jarak terdekat 4
+Keempat :Data 4,8; data 1 menjadi 1 cluster dengan jarak terdekat 5
+Kelima : Data 6,3,5; data 2,7 menjadi 1 cluster dengan jarak terdekat 9 
+Terakhir : Data 4,8,1; data 6,3,5,2,7; menjadi 1 cluster dengan jarak terdekat 12
+
+Sehingga dapat disimpulkan data yang ada pada dataaglo merupakan data yang berada dalam 1 cluster tunggal.
+
+### Metode 3. Average Linkage
+Untuk melakukan metode Average Linkage, dalam R dapat menggunakan fungsi hclust() kemudian memasukkan argument ‘average’ pada parameter ‘method’.
+```{r}
+hc_average <- hclust(d = d, method = "average")
+hc_average
+```
+
+#MEMBUAT DENDOGRAM
+Ketika menggunakan R, untuk membuat dendogram cukup dengan menggunakan fungsi plot(); sedangkan ketika menghitung manual dengan cara membuat plot antara objek/pengamatan dan mengubungkannya ketika antar objek/pengamatan tergabung menjadi satu klaster berdasarkan jarak minimum yang telah dihitung.
+```{r}
+plot(hc_average, hang =-1)#menampilkan Dendogram
+```
+Dari gambaran dendogram diatas dapat kita lihat
+Pertama :Data 4, data 8 menjadi 1 cluster dengan jarak terdekat 2 Kedua : Data 6, data 3, data 5 menjadi 1 cluster dengan jarak terdekat 2
+Ketiga : Data 2, data 7 menjadi 1 cluster dengan jarak terdekat 4
+Keempat :Data 4,8; data 1 menjadi 1 cluster dengan jarak terdekat 4
+Kelima : Data 6,3,5; data 2,7 menjadi 1 cluster dengan jarak terdekat 9 
+Terakhir : Data 4,8,1; data 6,3,5,2,7; menjadi 1 cluster dengan jarak terdekat 12
+
+Sehingga dapat disimpulkan data yang ada pada dataaglo merupakan data yang berada dalam 1 cluster tunggal.
+
+### Menghitung menggunakan fucntion agnes 
+Kedua fungsi ini sangat mirip (hclust dan agnes) namun, dengan fungsi agnes kita juga bisa mendapatkan koefisien aglomeratif, yang mengukur jumlah struktur pengelompokan yang ditemukan (nilai lebih dekat ke 1 menyarankan struktur pengelompokan yang kuat).
+
+### Koefisien Aglomeratif
+### membandingkan beberapa metode aglomeratif
+### membuat vector untuk membandingkan metode aglomeratif
+```{r}
+m <- c( "average", "single", "complete")
+names(m) <- c( "average", "single", "complete")
+```
+
+### Membuat fungsi untuk menghitung koefisien
+### Import library purrr untuk melakukan iterasi
+```{r}
+library(purrr)
+ac <- function(x) {
+    agnes(dataaglo,  method = x)$ac
+}
+map_dbl(m, ac)
+```
+Dari hasil perbandingan diatas didapat metode complete memiliki koefisien aglomeratif yang lebih tinggi dibandingkan metode lainnya
+
+# berikut dendogramnya
+```{r}
+hc3 <- agnes(d, method = "complete")
+pltree(hc3, cex = 0.6, hang = -1, main = "Dendrogram of agnes")
+```
+Dari gambaran dendogram agnes complete diatas dapat kita lihat
+Pertama :Data 4, data 8 menjadi 1 cluster dengan jarak terdekat 2 Kedua : Data 6, data 3, data 5 menjadi 1 cluster dengan jarak terdekat 2
+Ketiga : Data 2, data 7 menjadi 1 cluster dengan jarak terdekat 4
+Keempat :Data 4,8; data 1 menjadi 1 cluster dengan jarak terdekat 5
+Kelima : Data 6,3,5; data 2,7 menjadi 1 cluster dengan jarak terdekat 9 
+Terakhir : Data 4,8,1; data 6,3,5,2,7; menjadi 1 cluster dengan jarak terdekat 12
+
+Sehingga dapat disimpulkan data yang ada pada dataaglo merupakan data yang berada dalam 1 cluster tunggal.
+
+### Melihat Data dengan jumlah cluster 3
+```{r}
+anggota <- cutree (hc3, k=3)
+anggota
+```
+Dapat dilihat
+data 1 : cluster 1
+data 2 : cluster 2
+data 3 : cluster 3
+data 4 : cluster 1
+data 5 : cluster 3
+data 6 : cluster 3
+data 7 : cluster 2
+data 8 : cluster 1
+
+
+
+
+
+
+

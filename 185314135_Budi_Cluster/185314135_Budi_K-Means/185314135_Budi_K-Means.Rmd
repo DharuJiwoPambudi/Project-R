@@ -1,0 +1,229 @@
+---
+title: "185314135_Budi_K-Means"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## K-Means Clustering
+Clustering adalah seperangkat teknik yang luas untuk menemukan kelompok dalam kumpulan data.Tujuan utama analisis cluster adalah mengelompokkan objek-objek berdasarkan kesamaan karakteristik di antara objek-objek tersebut.
+Tahap-tahap pengerjaannya adalah sebagai berikut :
+
+1. Replication Requirements 
+
+2. Data Preparation 
+
+3. Clustering Distance Measures
+
+4. K-Means Clustering 
+
+5. Determining Optimal Clusters 
+
+6. Result Examination
+
+
+### 1. Replication Requirements
+Library yang dibutuhkan untuk mengelola metode K-Means ini antara lain:
+
+1. tidyverse digunakan untuk manipulasi data
+2. cluster digunakan untuk memanggil fungsi algoritma pengclusteran
+3. factoextra untuk memanggil fungsi algoritma pengclusteran dan visualisasi cluster
+```{r}
+library(tidyverse)  
+library(cluster)    
+library(factoextra) 
+```
+
+### 2. Data Preparation
+Hal yang perlu diperhatikan dalam data preparation untuk clustering:
+
+1. Data Format, baris adalah data nilai per individu, sedangkan kolom adalah nilai variabel.
+
+2. Replace/remove missing values, Setiap nilai data yang hilang harus dihapus atau diisi.
+
+3. Standarisasi data, terdiri dari transformasi variabel sehingga memiliki mean = 0 dan standar deviasi = 1.
+
+
+
+Membaca data
+```{r}
+d <-read.csv("contohsoal.csv",sep=",")
+d
+```
+
+Membuang kolom yang tidak diperlukan yaitu kolom 1 dengan menggunakan fungsi [-1] (menghapus kolom 1) pada penghapusan kolom ini harus dilakukan hanya sekali karna tidak menggunakan fungsi bantuan untuk menghentikan penghapusan apabila chunk dijalankan lebih dari satu kali.
+```{r}
+d <- d[-1]
+```
+
+Standarisasi data dari data yang sudah disesuaikan kolomnya.
+
+```{r}
+d <- scale(d)
+head(d)
+```
+
+### 3. Clustering Distance Measures
+Clustering Distance Measures mendefinisikan kesamaan antara 2 elemen(x,y) dihitung dan hal ini akan mempengaruhi bentuk clutser.
+Ada beberapa method yang umum digunakan untuk distance measures ini seperti Euclidean dan Manhattan Distances.
+
+    get_dist : Untuk menghitung matriks jarak. Perhitungan defaultnya dengan menggunakan Euclidean Distance. Tetapi get_dist ini juga suppport beberapa method lainnya seperti Manhattan, Pearson correlation, spearman correlation, dll.
+    fviz_dist : Visualisasi matriks jarak.
+
+
+```{r}
+distance <- get_dist(d)
+fviz_dist(distance,gradient = list(low="#00AFBB", mid = "white", high = "#FC4E07"))
+```
+Dari grafik jarak diatas dapat kita lihat semakin hijau jaraknya semakin mendekati 0, semakin merah jaraknya semakin mendekati jauh.
+Jarak dari data juga merupakan pengambaran dari matriks diagonal.
+Berikut cara melihat jarak antar datanya
+```{r}
+show(distance)
+```
+Jarak data diatas merepresentasikan jarak data dari visualisasi menggunakan garfik sebelumnya.
+
+### 4. K-Means Clustering
+K-Means clustering adalah algoritma unsupervised machine learning untuk mempartisi data yang diberikan ke k-cluster grup.
+Dalam pengelompokkan k-means, setiap cluster diwakili oleh pusatnya (centroid) yang sesuai dengan rata-rata titik yang ditetapkan ke cluster.
+
+Langkah-langkah pengerjaan menggunakan K-Means :
+
+1. Menetapkan jumlah K nya.
+
+2. Memilih secara acak k object dari dataset dan set sebagai initial cluster centers atau means.
+
+3. Menempatkan setiap data ke centroid terdekatnya berdasarkan jarak ED antara object dan centroid.
+
+4. Untuk setiap k clusters, Memperbarui pusat cluster dengan menghitung nilai rata-rata baru dari semua titik data di cluster.
+
+5. Mengulangi langkah 3-4 hingga penempatan cluster tetap/tidak bergeser lagi. Untuk informasi, secara default, R menetapkan 10 sebagai nilai default untuk jumlah maksimum iterasi.
+
+
+    centers : jumlah cluster
+    nstart  : mencoba beberapa konfigurasi awal dan melaporkan yang terbaik. Misal, nstart 7 akan menghasilkan 7 centroid acak awal dan memilih yang terbaik untuk perhitungan nanti.
+    
+    
+```{r}
+k2 <- kmeans(d, centers = 2, nstart = 7)
+str(k2)
+```
+jika menggunakan jumlah cluster sebanyak 2 maka data dikelompokan sebagai berikut :
+data 1 : cluster 2
+data 2 : cluster 2
+data 3 : cluster 1
+data 4 : cluster 2
+data 5 : cluster 1
+data 6 : cluster 1
+data 7 : cluster 2
+data 8 : cluster 2
+
+Penjelasan :
+
+    cluster : Vektor integer (1:K) yang menunjukkan cluster setiap titik yang dialokasikan.
+    centers : Matriks cluster centers.
+    totss   : Total sum of square.
+    withinss : Vektor dari jumlah kuadrat, satu komponen per cluster.
+    tot.withinss : Sum dari withinss.
+    betweenss : Jarak antara totss dan tot.withinss.
+    size : Jumlah titik disetiap cluster.
+
+```{r}
+k2
+```
+
+Visualisasi hasil cluster
+```{r}
+fviz_cluster(k2, data = d)
+```
+Grafik diatas merupakan hasil cluster yang telah dibangkitkan dengan menggunakan 2 centroid ( nilai k=2).
+
+Karena jumlah cluster (k) harus ditentukan sebelum kita memulai algoritma, sehingga sering kali kita harus mencoba beberapa nilai K yang berbeda dan memeriksa perbedaan hasil, apakah hasilnya lebih baik atau tidak(mencari nilai K yang optimal).
+```{r}
+k3 <- kmeans(d, centers = 3, nstart = 7)
+k4 <- kmeans(d, centers = 4, nstart = 7)
+```
+
+Visualisasi hasil clustering
+
+Pada bagian ini, kita mengeksekusi proses yang sama untuk jumlah centroid yang berbeda dan hasilnya bisa digabungkan untuk dijadikan perbandingan dengan fungsi grid.arrange di library gridExtra.
+```{r}
+p1 <- fviz_cluster(k2, geom = "point", data = d) + ggtitle("k = 2")
+p2 <- fviz_cluster(k3, geom = "point",  data = d) + ggtitle("k = 3")
+p3 <- fviz_cluster(k4, geom = "point",  data = d) + ggtitle("k = 4")
+
+library(gridExtra)
+grid.arrange(p1, p2, p3, nrow = 2)
+```
+dari gambar diatas dapat kita lihat 
+jika k = 2 (terdapat 2 cluster)
+jika k = 3 (terdapat 3 cluster)
+jika l = 4 (terdapt 4 cluster)
+
+### 5. Determining Optimal Clusters
+Pada tahap sebelumnya, kita sudah membandingkan hasil yang terbentuk dari beberapa grafik yang berbeda-beda jumlah clusternya, tetapi kita belum tahu jumlah cluster yang optimal untuk data kita. Untuk membantu analisis selanjutnya, pada bagian ini akan dijelaskan dua metode paling populer untuk menentukan cluster yang optimal, yaitu :
+
+1. Elbow Method
+Metode elbow akan melakukan perhitungan sum of square dan dijadikan acuan untuk membentuk grafik nilai k.
+2. Silhouette Method
+Metode silhouette akan melakukan perhitungan rata-rata siluet dan dijadikan acuan untuk membentuk grafik nilai k.
+
+##### 1. Elbow Method
+```{r}
+set.seed(1234)
+fviz_nbclust(d,kmeans,method = "wss", k.max=7)
+```
+
+jika dilihat dari grafik elbow jumlah k yang memiliki bentuk siku terbaik yaitu 3
+
+##### 2. Silhouette Method
+```{r}
+fviz_nbclust(d, kmeans, method = "silhouette", k.max=7)
+```
+
+jika dilihat berdasarkan silhoutte k terbaik yaitu k yang titik nya paling tinggi yaitu 3.
+
+### 6. Extracting Results
+Pada bagian ini , kita sudah melihat ditahap 5 bahwa ternyata pembagian paling optimal adalah dengan k = 3.
+
+Sehingga kita coba cek validasinya dengan function di package Cluster.
+```{r}
+# Compute k-means clustering with k = 3
+set.seed(123)
+final <- kmeans(d, 3, nstart = 7)
+print(final)
+```
+Dapat dilihat hasil clustering dengan k=3 dan nstart=7 yaitu
+terdapat 2 data pada cluster 1 (data 2 dan data 7), 3 data pada cluster 2 (data 1, data 4 dan data 8), 3 data pada cluster 3 (data 3, data 5, dan data 6)
+
+Visualisasi
+```{r}
+fviz_cluster(final, data = d)
+```
+Cluster final yang terbentuk berdasarkan nilai k terbaik adalah 3 cluster dengan pemagian seperti grafik:
+
+1. cluster 1: 7,2
+2. cluster 2: 1,8,4
+3. cluster 3: 3,5,6
+
+Pengukuran dengan Silhouette Width
+```{r}
+sil <- silhouette(final$cluster,dist(distance))
+head(sil[, 1:3], 7)
+```
+Visualisasi
+```{r}
+fviz_silhouette(sil)
+```
+
+```{r}
+si.sum <-summary(sil)
+si.sum
+```
+dapat disimpulkan jarak rata rata antar data dalam 1 cluster
+pada cluster pertama bernilai 0.312
+pada cluster kedua bernilai 0.458
+pada cluster ketiga 0.681
+

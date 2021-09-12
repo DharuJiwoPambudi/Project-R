@@ -1,0 +1,267 @@
+---
+title: "185314135_Budi_K-Medoids"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## K-Medoids Clustering
+
+Clustering adalah seperangkat teknik yang luas untuk menemukan kelompok dalam kumpulan data.Tujuan utama analisis cluster adalah mengelompokkan objek-objek berdasarkan kesamaan karakteristik di antara objek-objek tersebut.
+Tahap-tahap pengerjaannya adalah sebagai berikut :
+
+1. Replication Requirements    
+
+2. Data Preparation 
+
+3. Determining Optimal Clusters
+
+4. K-Medoids Clustering         
+
+5. Clustering Distance Measures
+
+6. Result Examination         
+
+
+### 1. Replication Requirements
+Pada tahap ini kita mengimport library yang dibutuhkan.
+
+```{r}
+library(tidyverse)  # data manipulation
+library(cluster)    # clustering algorithms
+library(factoextra) # clustering algorithms & visualization
+library (clValid)   # Evaluasi
+```
+
+
+### 2. Data Preparation
+Hal yang perlu diperhatikan dalam data preparation untuk clustering adalah:
+
+1. Data Format, baris adalah observation, nilai per individu, sedangkan kolom adalah nilai variabel
+
+2. Replace/remove missing values, setiap nilai data yang hilang harus dihapus atau diisi.
+
+3. Standarisasi data, terdiri dari transformasi variabel sehingga memiliki mean = 0 dan standar deviasi = 1.
+
+Membaca data
+```{r}
+dataMedoid <- read.csv("contohsoal.csv",sep=",")
+str(dataMedoid)
+dataMedoid
+```
+Menghapus data yang missing atau hilang
+```{r}
+dataMedoid <- na.omit(dataMedoid)
+```
+
+Perbedaan K-Means dengan K-Medoids
+
+Beberapa literatur ada yang menyatakan bahwa data outlier dapat dianalisis menggunakan K-Means, namun dengan batasan tertentu. Sehingga jika outlier melebihi batasan tersebut, maka lebih baik untuk menggunakan K-Medoids.
+
+Outlier/Pencilan artinya suatu angka yang memiliki nilai yang sangat berbeda jauh dengan nilai dari angka lainya pada data,
+
+Box plot biasanya digunakan untuk mendeteksi adanya Outlier/Pencilan atau tidak, tapi sifatnya hanya sebagai deteksi awal. Lebih bagus lagi jika dilakukan uji statistik untuk melihat ada atau tidaknya outlier.
+
+```{r}
+summary(is.na(dataMedoid[,2:3])) #melihat missing value
+summary(dataMedoid[,2:3]) #melihat deskriptif data
+boxplot(dataMedoid[,2:3]) #melihat data outlier
+```
+
+Menghilangkan kolom "Lokasi"
+```{r}
+dataMedoidX <- dataMedoid[-1]
+dataMedoidX
+str(dataMedoidX)
+```
+
+
+Standarisasi data
+
+```{r}
+dataMedoidScale <- scale(dataMedoidX)
+dataMedoidScale
+```
+
+
+Uji Multikolinearitas
+
+Jika nilai korelasi melebihi 0.5 maka hal itu menandakan bahwa terjadi multikolinearitas.
+Dari output matriks korelasi 2x2 pada hasil di bawah ini, terlihat bahwa nilai korelasi antar variabel berada di bawah 0.5 sehingga dapat disimpulkan bahwa asumsi tidak terjadi multikolinearitas telah terpenuhi.
+Sehingga, variabel-variabel tersebut dapat digunakan untuk analisis cluster.
+
+```{r}
+
+library(car)
+multikolinearitas<-cor(dataMedoidX)
+multikolinearitas
+```
+### 3. Determining Optimal Clusters
+
+Pada bagian ini akan dijelaskan tiga metode paling populer untuk menentukan cluster yang optimal, yaitu :
+
+1. Silhouette Method
+
+2. Elbow Method
+
+3. Gap Statistic
+
+
+
+```{r}
+fviz_nbclust(dataMedoidX, pam, method = "silhouette",k.max=7)
+
+```
+
+berdasarkan silhouette k terbaik yaitu 3 (dilihat dari titik tertinggi)
+```{r}
+set.seed(123)
+fviz_nbclust(dataMedoidX,pam,method = "wss", k.max=7)
+```
+
+berdasarkan elbow k terbaik yaitu 3 (dilihat dari titik yang paling membentuk siku)
+
+```{r}
+gap_stat <- clusGap(dataMedoidX,
+                    FUN = pam,
+                    K.max = 7, #max clusters to consider
+                    B = 30) #total bootstrapped iterations
+fviz_gap_stat(gap_stat)
+```
+
+berdasarkan gap statistic k terbaik yaitu 3 (dilihat dari titik tertinggi)
+
+### 4. K-Medoids Clustering
+Algoritma K-medoids adalah algoritma yang menemukan kelompok K-cluster(jumlah cluster) diantara semua objek data di dalam sebuah kelompok data. K-medoids tidak menentukan nilai rata-rata dari objek dalam cluster sebagai titik acuan, tapi menggunakan medoid(median), yang merupakan objek yang paling terletak di pusat sebuah cluster.
+
+Langkah-langkah pengerjaan menggunakan K-Medoids:
+
+1. Tetapkan jumlah K nya.
+
+2. Menentukan medoid awal yang digunakan, pada kasus penggunaan R pada medoid awalnya nya telah ditentukan secara otomatis
+
+3. Alokasikan setiap data (objek) ke cluster terdekat menggunakan persamaan ukuran jarak Euclidian Distance 
+
+4. Hitung jarak setiap objek yang berada pada masing-masing cluster dengan kandidat medoids baru.
+
+5. Jumlahkan seluruh hasil perhitungan jarak terdekat berdasarkan medoids nya, kemudian cari total(SUM) paling terkecil.  
+
+```{r}
+library(cluster)
+pam.result <- pam(dataMedoidX,3)
+print(pam.result)
+```
+
+dari hasil pengclusteran diatas didapat 
+cluster 1 terdiri dari data 1, 4 dan 8
+cluster 2 terdiri dari data 2 dan 7
+cluster 3 terdiri dari data 3, 5 dan 6
+
+Menghitung Jarak dengan menggunakan metric Euclidean Distance
+Ditampilkan dalam bentuk matriks
+```{r}
+pam.result$diss
+```
+Hasil jarak yang divisualisasikan berdasarkan grafik gradien warna. semakin berwarna biru maka semakin mendekati 0 jaraknya, semakin berwarna merah maka semakin jauh jaraknya
+
+```{r}
+distance <- get_dist(dataMedoidX)
+fviz_dist(distance,gradient = list(low = "blue", mid = "white", high = "red"))
+show(distance)
+```
+Hasil final cluster dapat dilihat sebagai berikut ini:
+
+```{r}
+#add cluster assignment to original data
+#final_data <- cbind(dataMedoid[,2:3], cluster = kmed$cluster)
+kmed <- pam(dataMedoidX, 3)
+final_data <- cbind(dataMedoidX, cluster = kmed$cluster)
+final_data
+```
+hasil finalnya dapt kita lihat dengan k=3
+cluster 1 terdiri dari data 1, 4 dan 8
+cluster 2 terdiri dari data 2 dan 7
+cluster 3 terdiri dari data 3, 5 dan 6
+
+```{r}
+#view final data
+head(final_data)
+```
+
+```{r}
+### dataframe hasil cluster ###
+df.cluster = data.frame(dataMedoid,pam.result$cluster)
+df.cluster
+```
+
+
+```{r}
+table(pam.result$clustering, dataMedoid$Lokasi)
+```
+
+
+```{r}
+## plot cluster
+fviz_cluster(pam.result, data = dataMedoid[,2:3])
+```
+
+Menghitung rata-rata dari setiap cluster.
+
+```{r}
+dataMedoidX %>%
+  mutate(Cluster = pam.result$cluster) %>%
+  group_by(Cluster) %>%
+  summarise_all("mean")
+```
+
+```{r}
+sil <- silhouette(final_data$cluster,dist(distance))
+head(sil[, 1:3], 8)
+```
+
+```{r}
+fviz_silhouette(sil)
+```
+
+```{r}
+si.sum <-summary(sil)
+si.sum
+```
+
+-Average proportion of non-overlap (APN) merupakan proporsi rata-rata data pada cluster berbeda dari dataset dan clustering berdasarkan dataset dengan menghilangkan satu kolom (variabel).
+
+-Average Distance (AD) -> Rata-rata lintasan terpendek dari sebuah grafik, sesuai dengan jumlah semua lintasan terpendek antara pasangan simpul dibagi jumlah total pasangan simpul.
+
+-Average distance between means (ADM) -> Mengukur jarak rata-rata antara pusat cluster untuk pengamatan yang ditempatkan di cluster yang sama di bawah kedua kasus
+
+-Figure of merit (FOM) -> Mengukur varians intra-cluster rata-rata dari kolom yang dihapus, di mana pengelompokan didasarkan pada kolom yang tersisa (tidak dihapus).
+
+```{r}
+validate <- clValid(dataMedoidScale, nClust=2:7, clMethods = "pam", validation =
+"stability", maxitems = 600, metric = "euclidean", method = "average",
+neighbSize = 8, annotation = NULL, GOcategory = "all",
+goTermFreq=0.05, dropEvidence=NULL, verbose=FALSE)
+summary(validate)
+plot(validate)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
