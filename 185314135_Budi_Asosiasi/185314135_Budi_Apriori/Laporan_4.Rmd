@@ -1,0 +1,163 @@
+---
+title: "Laporan Data Statistik"
+author: "185314135_DharuJiwoPambudi"
+date: "3/3/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Sebelum memproses suatu data pada RStudio langkah pertama yang harus dilakukan adalah melakukan setting working directory. Setting ini dapat dilakukan melalui menu session lalu memilih option Set Working Directory dan memilih directory yang memuat data yang akan diolah.
+```{r}
+setwd("D:/Dharu Jiwo Pambudi/Kuliah USD/Semester 6/Penambangan Data")
+```
+Setelah working directory diatur langkah selanjutnya adalah membaca data dengan memasukkan data yang akan dibaca dengan sebuah variabel yang bernama datastatistik dengan menggunakan fungsi read.csv karena data yang akan dibaca adalah data dengan tipe csv lalu memberikan separator barupa ";". Setelah data berhasil diambil selanjutnya data akan ditampilkan dengan fungsi view.
+```{r}
+datastatistik<- read.csv("#4_data_latih_statistik.csv", sep = ";")
+View(datastatistik)
+```
+Fungsi dari view akan menampilkan isi dari variabel datastatistik pada halaman baru. Setalah melihat data dari datastatistik selanjutnya adalah melihat tipe data dari datastatistik menggunakan fungsi str.
+```{r}
+str(datastatistik)
+```
+Dari hasil diatas dapat diketahui tipe data dari masing-masing variabel yaitu:
+1. ID.Pelanggan bertipe int
+2. Nama bertipe chr
+3. Jenis.Kelamin bertipe int
+4. Pendapatan bertipe int
+5. Produk bertipe chr
+6. Harga bertipe int
+7. Jumlah bertipe int
+8. Total bertipe int
+9. Tingka.Kepuasan bertipe int
+Dari 9 variabel diatas akan dibuah beberapa tipe data pada variabel tertentu agar data dapat dioperasikan dengan benar. Adapun variabel-variabel yang akan diubah adalah sebagai berikut:
+1. ID.Pelanggan dirubah menjadi tipe chr karena ID.Pelanggan merupakan nomor yang unik agar tidak bisa dikenai operasi numbering.
+2. Produk dirubah menjadi factor atau kategorikal.
+3. Jenis.Kelamin dirubah menjadi data kategorikal atau factor.
+4. Tingkat.Kepuasan dirubah menjadi factor karena merupakan tipe kategori yang ordinal.
+```{r}
+#ngrubah tipe variabel
+datastatistik$ID.Pelanggan<-as.character(datastatistik$ID.Pelanggan)
+datastatistik$Produk<-as.factor(datastatistik$Produk)
+datastatistik$Jenis.Kelamin<-as.factor(datastatistik$Jenis.Kelamin)
+datastatistik$Tingkat.Kepuasan<-as.factor(datastatistik$Tingkat.Kepuasan)
+
+```
+Setelah tipe data diubah Selanjutnya adalah mengolah datastatistik dengan menggunakan central tandency (Mean, Median, dan Modus). Untuk mengolah nilai modus digunakan sebuah package pracma. Untuk mengaktifkan library masuk pada package lalu centang pada library pracma maka secara otomotis library dapat diakses atau dapat diaktifkan dengan menggunakan kode berikut,
+```{r}
+library(pracma)
+```
+Setalah aktif maka nilai modus sudah dapat diakses. Nilai modus yang akan dicari yaitu nilai modus dari variabel Produk dan Tingkat.Kepuasan. Untuk mendapatkan nilai modus digunakan fungsi Mode dari library pracma.
+```{r}
+Mode(datastatistik$Produk)
+Mode(datastatistik$Tingkat.Kepuasan)
+```
+
+Dari hasil diatas dapat diketahui bahwa Produk yang sering muncul adalah Produk "D" dan Tingkat.Kepuasan yang sering didapat adalah 3. Setelah mencari nilai modus atau nilai yang sering muncul selanjutnya adalah mencari nilai median atau nilai tengah. Nilai tengah yang akan dicari adalah nilai tengah dari Pendapatan, Harga, Jumlah, dan Total. Untuk mencari median digunakan fungsi median().
+
+```{r}
+median(datastatistik$Pendapatan)
+median(datastatistik$Harga)
+median(datastatistik$Jumlah)
+median(datastatistik$Total)
+```
+
+Hasil diatas menunjukkan bahwa nilai tengah dari Pendapatan adalah 875000, harga 2e+05 karena nilainya memiliki digit yang banyak maka nilai harga direpresentasikan dalam bentuk heksadesimal, jumlah memiliki nilai rengah sebesar 4, dan total memiliki nilai tengah sebesar 675000. Selanjutnya yaitu mencari mean dari Pendapatan, Harga, Jumlah, dan Total. Untuk mencari median digunakan fungsi mean().
+
+```{r}
+mean(datastatistik$Pendapatan)
+mean(datastatistik$Harga)
+mean(datastatistik$Jumlah)
+mean(datastatistik$Total)
+```
+Didapatkan rata-rata dari Pendapatan adalah 1160000, rata-rata dari Harga adalah 197500, rata-rata dari Jumlah adalah 3.65, dan rata-rata dari Total adalah 710000. Setelah nilai central tendancy didapatkan selanjutnya adalah menghitung nilai dari dispersian data. Dispersian berupa nilai varian, range, dan standar deviasi.Untuk variabel yang dicari nilai disperian atau persebarannya adalah variabel Pendapatan.
+
+```{r}
+var(datastatistik$Pendapatan)
+max(datastatistik$Pendapatan)-min(datastatistik$Pendapatan)
+sd(datastatistik$Pendapatan)
+```
+Varian yang dihasilkan dari pendatan adalah 1.645684e+12 sedangkan range dari Pendapatan adalah 6050000 dan standar deviasinya adalah 1282842. Selain menggunakan cara tersebut dapat juga menggunakan fungsi summary(). summary() akan menghasilkan nilai dari minimum, Quartil 1, Mean, Median, Quartil 3, dan Max.
+```{r}
+summary(datastatistik)
+```
+Hasil diatas menunjukkan summary dari data statistik untuk masing-masing variabel.
+
+
+Setalh nilai-nilai dari perebaran data didapatkan selanjutnya adalah melakukan visualisasi dari datastatistik. Visualisasi dapat dilakukan dengan beberapa cara diantaranya yaitu,
+1. Plot digunakan untuk tipe data factor
+2. Histogram digunakan untuk tipe data numerik
+3. Boxplot ddigunakan untuk summary data
+Pada visualisasi plot bisa diterapkan pada datastatistik dari Jenis.Kelamin.
+```{r}
+plot(datastatistik$Jenis.Kelamin)
+```
+
+gambar diatas menerangkan bahwa jenis kelamin dengan kode 1 memiliki 6 data sedangkan kode 2 memiliki 14 data. Sedangkan untuk data histogram dapat diterapkan untuk variabel pendapatan.
+```{r}
+hist(datastatistik$Pendapatan)
+```
+Histogram diatas menunjutkkan persebaran data pendapatan dimana terdapat 14 data yang memiliki pendapatan antara 0 sampai 1e+06 lalu 5 data memiliki pendapatan antara 1e+06 sampai 2e+06 dan 1 orang memiliki pendapatan antara 6e+06 sampai 7e+06. Pendapatan juga dapat divisualisasikan menggunakan boxplot melalui fungsi boxplot()
+```{r}
+boxplot(datastatistik$Pendapatan)
+```
+
+Gambar diatas menunjukan adanya five summary yaitu nilai minimum, Quartil 1, Quartil 2, Quartil 3, dan maximum. pada penggambaran memang kurang jelas dikarenakan ada data yang memiliki nilai yang cukup berbeda.
+Selanjutnya yaitu mengetahui visualisasi dari Produk, Harga, Jumlah, Total, dan Tingkat.Kepuasan.
+```{r}
+plot(datastatistik$Produk)
+hist(datastatistik$Harga)
+hist(datastatistik$Jumlah)
+hist(datastatistik$Total)
+plot(datastatistik$Jenis.Kelamin)
+```
+Dari visualisasi diatas dapat disimpulkan menjadi:
+1. Profil Pelanggan
+ a. Jenis Kelamin Pelanggan
+ Pelanggan dengan kode jenis kelamin 2 lebih banyak dibandingkan pelanggan dengan jenis kelamin dengan kode 1. hal ini membuktikan bahwa pelanggan dengan jenis kelamin kode 2 lebih tertarik dengan produk dibandingkan pelanggan dengan jenis kelamin 1.
+ b.Rata-rata Pendapatan
+ Rata-rata pendapatan dari pelanggan adalah 1160000. Pelanggan yang melakukan pembelian di toko rata-rata memiliki pendapatan kurang lebih 1160000.
+ c. Pelanggan rata-rata membeli produk sejumlah 4 produk dengan frequensi 8 pelanggan. dapat disimpulkan bahwa pelanggan kebanyakan memberli 4 produk dari toko.
+ d. Rata-rata total belanja pelanggan adalah sebesar 710000 dengan frekuensi terbanyaka adalah pelanggan dengan pembelian total 200000 dan 400000.
+ e. Pelanggan cukup puas dengan kinerja toko dan produk dengan memberikan pilihan 3 pada tingkat kepuasan yang memberikan frekuensi terbanyak yaitu 8. 
+2. Gambaran Produk
+  a. Produk yang sering dibeli adalah produk "D". produk ini dibeli sebnanyak 5 pelanggan yang menjadi frequensi terbanyak penjualan produk.
+  b. Rata-rata harga produk terjual adalah 197500 sedangkan frekuensi tertinggi penjualan adalah pada rentang harga 100000 sampai 150000 dengan 8 pelanggan.
+Setelah menggambarkan data statistik dengan analisis deskriptif selanjutnya adalah mencari hubungan dengan menggunakan analisis inferensia. Analisis ini diterapkan pada data populsai. Pada data berupa numerik dapat digunakan scatter plot untuk visualisasi dimana uji statistik dapat dicari menggunakan analisis korelasi.
+```{r}
+#1 Mencari hubungan antara pendapatan dengan total belanja
+#-Keduanya numerik 
+#-ScatterPlot(plot), analisis kolerasi(cor.test)
+plot(datastatistik$Pendapatan,datastatistik$Total)
+cor.test(datastatistik$Pendapatan,datastatistik$Total)
+```
+
+Dari data diatas dapat diketahui grafik atau plot menunjukkan adanya korelasi positif dan terdapat data outlier pada sisi >6e+06. Sementara uji statistik menggunakan cortest yang menunjukkan data-data t, df, dan p-value. nilai yang ditunjukkan cukup positif hal ini berarti bahwa hubungan antara pendapatan dan total cukup relevan semakin besar pendapatan semakin tinggi total pemberlian dari pelanggan. Data ini memberikan nilai korelasi higga 0.5.
+
+Selanjutnya adalah membandidngkan data statistik antara Tingkat.Kepuasan dan Produk dimana kedua variabel ini merupakan variabel dengan tipe factor.Untuk data factor melihat ada tidaknya hubungan dapat menggunakan tabulasi silang dan chis square test namun fungsi ini tidak dapat mengukur seberapa kuat hubungan antara produk dengan tingkat kepuasan.
+Tabulasi silang dapat dibentuk dengan fungsi table.
+```{r}
+#2 Bagaimana pengaruh kepuasan pelanggan
+#-Tabulasi silang, c-square text
+table(datastatistik$Produk,datastatistik$Tingkat.Kepuasan)
+```
+Dari tabel diatas menggambarkan data factor dengan baris adalah produk dan kolom adalah tingkat kepuasan yang menunjukkan adanya hubungan. Lalu untuk uji hipotesisnya digunakan chisquaretest dengan fungs chis.test().
+```{r}
+chisq.test(table(datastatistik$Produk,datastatistik$Tingkat.Kepuasan))
+```
+Pada uji hipotesis terdapat peringatan yang menyatakan bahwa data yang terbentuk mungkin tidak benar.Namun nilai hipotesisnya tetap keluar yang menunjukkan X-squared memiliki nilai 7.95 dengan df adalah 8 dan p-value 0,43. Nilai p-value yang positif menunjukkan bahwa data saling berhubungan. Meskipun diketahui data saling berhubungan namun kuat hubungan dari data tidak diketahui secara nyata.
+
+Selanjutnya adalah perbandingan antara jenis kelamin dengan total belanja dengan tipe factor.Untuk menguji hipotesis digunakan T.test dan untuk visualisasi digunakan boxplot. Untuk menggunakan boxplot digunakan tanda hubung (~)
+```{r}
+#3 Hubungan jenis kelamin dengan total belanja\
+#-T-test vs boxplot
+boxplot(Total~Jenis.Kelamin,data=datastatistik)
+```
+Terlihat boxplot memperlihatkan box dari tiap kategori untuk kode jenis kelamin 1 dan jenis kelamin  2. Dari gambar dapat disimpulkan bahwa rata-rata kedua jenis kelamin adalah berbeda. Untuk menguji hipotesis digunakan fungsi T.test.
+```{r}
+t.test(Total~Jenis.Kelamin,data=datastatistik)
+```
+
+Pada pengujian tersebut dapat dilihat relasi antar kelompok dengan data numerik pada masing-masing grup. Dapat ditunjukkan grup 2 memiliki nilai lebih tinggi yang berarti pelanggan dengan jenis kelamin 2 lebih banyak dan lebih berpotensi untuk membeli produk pada toko.
