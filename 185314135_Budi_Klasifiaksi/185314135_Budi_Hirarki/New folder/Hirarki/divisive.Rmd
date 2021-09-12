@@ -1,0 +1,47 @@
+---
+title: "Divisive"
+date: "5/19/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(readr)  #Membaca data
+library(dplyr)  #Data processing
+library(DT)     #Menampilkan tabel agar mudah dilihat di browser
+```
+
+### Library yang dibutuhkan untuk hierarchical clustering
+```{r}
+library(stats)
+library(cluster) #untuk melakukan cluster
+```
+
+#Pertama meng-input data 
+```{r}
+dataDivisive <- read.csv("dataHirarki.csv",sep=";")
+str(dataDivisive)
+dataDivisive
+```
+
+### Menghitung menggunakan fucntion diana
+dengan fungsi diana kita juga bisa mendapatkan koefisien divisive, yang mengukur jumlah struktur pengelompokan yang ditemukan (nilai lebih dekat ke 1 menyarankan struktur pengelompokan yang kuat).
+
+### Koefisien Aglomeratif
+```{r}
+hc4 <- diana(dataDivisive)
+hc4$dc
+```
+# berikut dendogramnya
+```{r}
+pltree(hc4, cex = 0.6, hang = -1, main = "Dendrogram of diana")
+```
+
+
+
+
+
+

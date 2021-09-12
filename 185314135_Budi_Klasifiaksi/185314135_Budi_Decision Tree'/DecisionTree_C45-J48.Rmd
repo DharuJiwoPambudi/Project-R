@@ -1,0 +1,148 @@
+---
+title: "DecisionTree_C45J48"
+author: "185314135_DharuJiwoPambudi"
+date: "6/5/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+Membangun Decision Tree menggunakan algoritma C45 = J48 dari Weka
+Apa itu decision tree ?
+
+Decision Trees termasuk kedalam metode pembelajaran supervised learning. Merupakan algoritma yang digunakan untuk melakukan tugas klasifikasi dan regresi. Decision Tree merupakan algoritma yang powerfull, memiliki kemampuan untuk melakukan fitting dataset yang kompleks. Selain itu, DT merupakan komponen dasar untuk membangun random forest. yang merupakan algoritme yang potensial saat ini.
+Library yang digunakan
+
+Untuk membangun DT dapat menggunakan 2 library yaitu :
+
+    library(party), fungsi ctree –> positive dan negative
+    library(rpart), fungsi rpart –> gini (CART)
+    library(RWeka), fungsi J48 –> c45
+
+Langkah pembuatan model decision tree
+
+Langkah-langkah untuk membangun model DT menggunakan R adalah:
+Step 1 : Import data
+Step 2 : Preprocessing data
+Step 3 : Membuat training data dan testing data
+Step 4 : Membangun model decision Tree
+Step 5 : Membuat prediksi
+Step 6 : Evaluasi model / mengukur performance
+Step 7 : Tuning parameter
+Step 1) Import Data
+
+Data yang akan digunakan untuk memahami pembuatan model decision tree adalah dataset pelamar “Diterima” berdasarkan IPK, Wawancara dan test Psikologi. Adapun datanya adalah sebagai berikut:
+``
+```{r}
+trainData <- read.csv("dataditerima.csv",sep=";")
+str(trainData)
+trainData
+```
+Step 2) Preprocessing Data
+
+Beberapa tahapan preprosesing data yang perlu dilakukan :
+
+    Pastikan dataset telah memiliki kelas tujuan yang bertipe kategorikal (kasus klasifikasi).
+    Tidak ada data yang NA / bernilai null
+    Tentukan variabel-variabel yang akan digunakan untuk proses klasifikasi. Variabel yang tidak digunakan dapat dihilangkan.
+    Pada tahap ini perhatikan dataset yang digunakan. Tentukan class tujuan dan ubah tipe dari class tujuan.
+    Jika diperlukan lakukan proses suffle dataset (mengacak kembali dataset), terutama jika dataset yang digunakan akan digunakan untuk training dan testing.
+
+Untuk kasus “Diterima” tahapan preprosesing yang dilakukan adalah membuat variabel Diterima menjadi bertipe factor karena merupakan atribut/variabel kategorikal sebagai kelas tujuan.
+
+```{r}
+trainData$Diterima <- factor(trainData$Diterima)
+str(trainData)
+```
+Step 3) Membuat training data dan testing data
+
+Data testing dibuat pada file terpisah
+```{r}
+testData <- read.csv("dataditerimatesting.csv",sep=";")
+testData$Diterima <- factor(testData$Diterima)
+str(testData)
+testData
+```
+Step 4) : Membangun model decision Tree
+
+untuk membangun model, gunakan fungsi J48 merupakan algoritma C4.5 dari library RWeka. Sintaknya adalah :
+
+J48(formula, data, subset, na.action,
+control = Weka_control(), options = NULL)
+
+Arguments:, - formula = variabel-variabel untuk membangun model - data : data yang digunakan untuk membangun model - subset : optional - control : menggunakan weka_control
+
+Weka_controll(R = TRUE, M=5)
+
+
+
+```{r}
+Sys.setenv('JAVA_HOME'="C:/Program Files/Java/jdk-14.0.2/")
+library(RWeka)
+```
+
+```{r}
+library(rJava)
+##install.packages("rJava")
+
+##default:
+trainData$IPK <- factor(trainData$IPK)
+trainData$Wawancara <- factor(trainData$Wawancara)
+trainData$Psikologi <- factor(trainData$Psikologi)
+str(trainData)
+trainData
+```
+
+```{r}
+formula <- Diterima~Wawancara+IPK+Psikologi
+fit <- J48(formula,data=trainData)
+fit
+summary(fit)
+```
+```{r}
+fit <- PART(formula,data=trainData)
+fit
+```
+
+```{r}
+summary(fit)
+```
+
+```{r}
+table(predict(fit), trainData$Diterima)
+```
+
+```{r}
+testData$IPK <- factor(testData$IPK)
+testData$Wawancara <- factor(testData$Wawancara)
+testData$Psikologi <- factor(testData$Psikologi)
+str(testData)
+```
+
+```{r}
+prediksi <- predict(fit,newdata=testData,type="class")
+prediksi
+```
+
+```{r}
+table_mat <- table(testData$Diterima,prediksi)
+table_mat
+```
+```{r}
+library(caret)
+confusionMatrix(table(testData$Diterima,prediksi))
+```
+
+
+```{r}
+    control <- Weka_control(R=TRUE,M=2)
+    tune_fit <- J48(Diterima~.,data=trainData,control=Weka_control(R=FALSE))
+    tune_fit
+```
+```{r}
+    if(require("partykit", quietly = TRUE)) plot(tune_fit)
+```
+

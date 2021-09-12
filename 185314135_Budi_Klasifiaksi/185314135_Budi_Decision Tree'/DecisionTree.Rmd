@@ -1,0 +1,327 @@
+---
+title: "DecissionTree"
+author: "185314135_DharuJiwoPambudi"
+date: "29/4/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+Dataset Diterima
+
+Buat terlebih dahulu dataset tersebut, kemudian simpan data tersebut dalam bentuk cvs. Selanjutnyakan lakukan proses import data
+```{r}
+dataditerima <- read.csv("dataditerima.csv",sep=";")
+str(dataditerima)
+dataditerima
+```
+
+Step 2) Preprocessing Data
+
+Beberapa tahapan preprosesing data yang perlu dilakukan :
+
+    Pastikan dataset telah memiliki kelas tujuan yang bertipe kategorikal (kasus klasifikasi).
+    Tidak ada data yang NA / bernilai null
+    Tentukan variabel-variabel yang akan digunakan untuk proses klasifikasi. Variabel yang tidak digunakan dapat dihilangkan.
+    Pada tahap ini perhatikan dataset yang digunakan. Tentukan class tujuan dan ubah tipe dari class.
+    Jika diperlukan lakukan proses suffle dataset (mengacak kembali dataset), terutama jika dataset yang digunakan akan digunakan untuk training dan testing.
+
+Untuk kasus “Diterima” tahapan preprosesing yang dilakukan adalah membuat variabel Diterima menjadi bertipe factor karena merupakan atribut/variabel kategorikal sebagai kelas tujuan.
+
+```{r}
+dataditerima$Diterima <- factor(dataditerima$Diterima)
+str(dataditerima)
+```
+Step 3) Membuat training data dan testing data
+
+Sebelum membangun model dan mentraining model, perlu membagi dataset ke dalam 2 jenis dataset yaitu training dataset dan testing dataset. Beberapa cara untuk membagi data :
+
+    Bagi data secara random. Gunakan set.seed agar hasil yang selalu konsisten. Jika tidak menggunakan set.seed maka hasil akan selalu berubah.
+```{r}
+set.seed(12)
+ind <- sample(2, nrow(dataditerima), replace=TRUE, prob=c(0.7, 0.3))
+trainData <- dataditerima[ind==1,]
+testData <- dataditerima[ind==2,]
+trainData
+testData
+```
+
+
+    Bagi dataset sesuai urutan dataset.
+
+Misalkan 70% data training dan 30% datatesting.
+```{r}
+n_row = nrow(dataditerima)
+totalrow = 0.7*n_row
+jumlahsampletraining <- 1 : totalrow
+trainData <- dataditerima[jumlahsampletraining, ]
+trainData
+```
+```{r}
+testData <- dataditerima[-jumlahsampletraining, ]
+testData
+```
+untuk memudahkan agar membagi data secara konstan dapat diubah-ubah prosentasenya maka ubah script sebelumnya menjadi sebuah fungsi. Berikut fungsi nya :
+```{r}
+create_train_test <- function(data, size = 0.7, train = TRUE) {
+    n_row = nrow(data)
+    totalrow = size * n_row
+    jumlahsampletraining <- 1: totalrow
+    if (train == TRUE) {
+        return (data[jumlahsampletraining, ])
+    } else {
+        return (data[-jumlahsampletraining, ])
+    }
+}
+```
+selanjutnya adalah memanggil fungsi create_train_test
+```{r}
+trainData <- create_train_test(dataditerima,0.7,train=TRUE)
+trainData
+```
+
+```{r}
+testData <- create_train_test(dataditerima,0.3,train=FALSE)
+testData
+```
+```{r}
+#untuk mengecek hasil randomisasinya benar
+prop.table(table(trainData$Diterima))
+```
+```{r}
+prop.table(table(testData$Diterima))
+```
+Ketika membagi data secara kontan, maka perlu diperhatikan dataset yang dimiliki Perhatikan untuk datatraining, IPK kurang tidak adalah datatraining. Atau misalnya jika kelas tujuannya diurutkan berdasarkan Diterima “Ya” terlebih dahulu, maka kemungkinan Diterima=“Tidak” tidak pernah akan ada dalam datatraining. Oleh karenanya untuk membagi data dengan cara ini, maka perlu terlebih dahulu melakukan dilakukan shuffle terhadap dataset yang miliki.
+
+```{r}
+shuffle_index = sample(1:nrow(dataditerima))
+head(shuffle_index)
+```
+```{r}
+##sebelum dishuffle
+dataditerima
+```
+```{r}
+dataditerima <- dataditerima[shuffle_index, ]
+##setelah dishuffle
+dataditerima
+```
+```{r}
+trainData <- create_train_test(dataditerima,0.7,train=TRUE)
+trainData
+```
+```{r}
+testData <- create_train_test(dataditerima,0.3,train=FALSE)
+testData
+```
+
+```{r}
+#untuk mengecek hasil randomisasinya benar
+prop.table(table(trainData$Diterima))
+```
+```{r}
+prop.table(table(testData$Diterima))
+```
+Pisahkan dalam file berbeda antara data testing dan data training. Sebagai contoh datatesting adalah dataditerima (seperti pada step 1) dan berikut adalah dataditerima untuk testing :
+#Ada Gambar
+Dataset Diterima
+```{r}
+testData <- read.csv("dataditerimatesting.csv",sep=";")
+testData$Diterima <- factor(testData$Diterima)
+str(testData)
+testData
+```
+```{r}
+## data training dari dataditerima 
+trainData <- read.csv("dataditerima.csv",sep=";")
+trainData$Diterima <- factor(trainData$Diterima)
+str(trainData)
+trainData
+```
+Step 4) : Membangun model decision Tree
+
+untuk membangun model, gunakan fungsi rpart dari library rpart. Sintaknya adalah : rpart(formula, data= , method = ’’), arguments :
+
+    formula = variabel-variabel yang akan diprediksi
+    data : data yang digunakan untuk membangun model
+    method : “class” untuk classification tree, “anova” untuk regression tree
+
+merupakan minimal argument yang dapat digunakan untuk membangun model
+
+dapat ditambahkan argument untuk meningkat performa dari decision tree, yaitu menggunakan fungsi rpart.control()
+
+rpart.control(minsplit = 20, minbucket = round(minsplit/3), maxdepth = 30)
+
+Arguments:
+
+-minsplit: Set the minimum number of observations in the node before the algorithm perform a split -minbucket: Set the minimum number of observations in the final note i.e. the leaf -maxdepth: Set the maximum depth of any node of the final tree. The root node is treated a depth 0
+
+sehingga jika ingin dilengkapi maka fungsi rpart menjadi : rpart(formula, data= , method = ’’,control=rpart.control()
+
+Secara default, fungsi rpart() menggunakan the Gini impurity measure untuk membagi atributnya. Makin tinggi Gini coefficient, makin berbeda dataset dalam suatu atribut
+```{r}
+library(rpart)
+library(rpart.plot)
+```
+```{r}
+##default:
+fit <- rpart(Diterima~.,data=trainData,method="class")
+
+## tuning:
+fit <- rpart(Diterima~.,data=trainData,method="class",control=rpart.control(minsplit=2))
+##atau
+fit <- rpart(Diterima~IPK+Wawancara+Psikologi,data=trainData,method="class",control=rpart.control(minsplit=2))
+
+##atau
+formula <- Diterima~Wawancara+IPK+Psikologi
+fit <- rpart(formula,data=trainData,method="class")
+fit <- rpart(formula,data=trainData,control=rpart.control(minsplit=2))
+fit
+```
+```{r}
+## menggambarkan plot
+rpart.plot(fit,extra=106)
+```
+Penjelasan :
+
+    rpart() : Fungsi untuk membangun model. Argument:
+        Diterima ~ . : Formula dari Decision Tree. Variabel Diterima terhadap keseluruhan atribut yang lainnya (.). Jika variabel yang hendak dibangun model tidak keseluruhan, maka harus disebutkan satu persatu : Diterima ~ IPK+Wawancara+Psikologi.
+        data = trainData : merupakan dataset yang akan ditraining
+        method = “class”
+        control=rpart.control(minsplit=2) : minsplit = 2
+
+    rpart.plot() untuk membuat plot. Argumen extra = 106 untuk binary, 104 = ditampilkan lebih dari 2 level. 100 = untuk lainnya. “auto” –> nilai Default
+
+Beberapa cara untuk menggambarkan plot hasil decision tree :
+
+    Menggunakan rpart.plot()
+    Menggunakan plot ()
+    Menggunakan library(rattle),library(rpart.plot) dan library(RColorBrewer)
+
+Menggunakan rpart.plot()
+```{r}
+## Menggambarkan plot dengan rpart.plot()
+library(rpart.plot)
+rpart.plot(fit,extra=106)
+```
+Menggunakan plot()
+```{r}
+## Menggambarkan plot dengan plot()
+
+
+plot(fit,margin=0.2)
+text(fit, use.n=TRUE,pretty=TRUE,cex=0.8)
+```
+Menggunakan fungsi fancyRpartPlot() dari library rattle()
+
+```{r}
+library(rattle)
+```
+```{r}
+fancyRpartPlot(fit)
+```
+### Step 5) : Membuat prediksi
+
+Untuk membuat prediksi, menggunakan fungsi predict(). Secara default syantax untuk melakukan prediksi dari R decision tree adalah :
+
+predict(fitted_model, df, type=class)
+arguments:
+- fitted_model : Model yang telah dibangun
+- df : data yang akan diprediksi
+- type : Jenis prediksi :
+    - 'class' : untuk klasifikasi
+    - 'prob' :  untuk menghitung probabilistik setiap kelas
+    - 'vector' : untuk memprediksi mean rerponse pada setiap node
+
+
+Akan dilakukan prediksi terhadap data testing. Data testing yang akan digunakan adalah dataditerima_testing (variabel : testData). Melihat hasil prediksi dari datatesting mana yang diterima dan yang tidak.
+```{r}
+prediksi <- predict(fit,newdata=testData,type="class")
+prediksi
+```
+Hasil prediksi adalah
+
+    Data pertama : Ya
+    Data kedua : Tidak
+    Data ketiga : Ya.
+
+Menghitung total yang diterima dan yang tidak diterima, dapat menggunakan table
+```{r}
+table_mat <- table(testData$Diterima,prediksi)
+
+table_mat
+```
+Model dapat memprediksi data yang diterima adalah 1, sementara yang lain tidak tepat hasil prediksinya.
+Step 6) : Evaluasi model / mengukur performance
+
+Evaluasi model, dapat dilakukan dengan mengukur akurasinya yaitu menggunakan confusion matrix
+
+Akurasi diperoleh dari jumlah hasil diagonal dari confussion matrix dibagi dengan keseluruhan data. table_mat merupakan table confussion matrix.
+```{r}
+akurasi <- sum(diag(table_mat))/sum(table_mat)
+print(paste("Hasil akurasinya adalah  : ", akurasi))
+```
+Atau dapat menggunakan fungsi confusionMatrix dari library(caret)
+```{r}
+library(caret)
+```
+```{r}
+confusionMatrix(table(testData$Diterima,prediksi))
+```
+
+```{r}
+confusionMatrix(table(testData$Diterima,prediksi))
+```
+Step 7) : Tuning parameter
+
+Untuk dapat meningkatkan akurasi, maka yang perlu dilakukan adalah melakukan tuning parameter control,yaitu:
+
+    minsplit,
+    minbucket,
+    maxdept dan
+    cp(complexity parameter) yaitu ukuran kompleksitas dalam membangun tree. Jika cost untuk menambahkan variabel ke dalam tree melebih dari curent tree melebih nilai cp maka proses membangun tree tidak dilanjutkan.
+
+Untuk melihat cp dapat dilakukan dengan menggunakan
+```{r}
+ print(fit$cptable)
+```
+Untuk melakukan tuning paramater, dilakukan dengan mensettup rpart.control
+```{r}
+control <- rpart.control(minsplit=2,minbucket=round(4/3),maxdept=3,cp=0)
+
+    control <- rpart.control(minsplit=2,minbucket=round(4/3),maxdept=3,cp=0)
+    tune_fit <- rpart(Diterima~.,data=trainData,method='class',control=control)
+    tune_fit
+```
+```{r}
+    prediksi <- predict(fit,newdata=testData,type="class")
+    prediksi
+```
+```{r}
+    confusionMatrix(table(testData$Diterima,prediksi))
+```
+KESIMPULAN
+
+Berikut kesimpulan dari fungsi yang digunakan untuk mendesain model decision tree menggunakan R.

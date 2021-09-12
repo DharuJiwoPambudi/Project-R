@@ -1,0 +1,23 @@
+---
+title: "Hierarku_Budi"
+author: "185314135_DharuJiwoPambudi"
+date: "6/5/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+Membuat working directory menjadi directory yang telah disiapkan dan memasukkannya dengan fungsi setwd, pada directory yang diguanakan kali ini adalah directory D:/Dharu Jiwo Pambudi/Kuliah USD/Semester 6/Penambangan Data/New folder/185314135_Budi_Hirarki.
+```{r}
+setwd("D:/Dharu Jiwo Pambudi/Kuliah USD/Semester 6/Penambangan Data/New folder/185314135_Budi_Hirarki")
+```
+
+Menginputkan data untuk data awal hierarki. Data yang digunakan sesuai dengan data pada kelas teori agar dapat dibandingkan.
+```{r}
+data <- read.csv("datahirarki.csv",sep = ";")
+data
+```
+

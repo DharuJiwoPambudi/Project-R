@@ -1,0 +1,116 @@
+---
+title: "euclidian"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### import library 
+```{r}
+library(readr)  #Membaca data
+library(dplyr)  #Data processing
+library(DT)     #Menampilkan tabel agar mudah dilihat di browser
+```
+
+### Library yang dibutuhkan untuk hierarchical clustering
+```{r}
+library(stats)
+library(cluster) #untuk melakukan cluster
+```
+
+
+#Pertama meng-input data 
+```{r}
+dataHirarki <- read.csv("dataHirarki.csv",sep=";")
+str(dataHirarki)
+dataHirarki
+```
+
+##Menghitung Matriks Distance
+Matriks distance merupakan matriks yang berisikan pasangan jarak antar objek yang dihitung dengan Euclidian Distance. Dalam R, matriks distance dapat dihitung dengan menggunakan fungsi dist()
+```{r}
+d <- dist(dataHirarki, method = "euclidean")
+d
+```
+
+##Memulai Analisis Klaster
+#Metode 1. Single Linkage
+
+Untuk melakukan metode Single Linkage, dalam R dapat menggunakan fungsi hclust() kemudian memasukkan argument ‘single’ pada parameter ‘method’
+```{r}
+hc_single <- hclust(d = d, method = "single")
+hc_single
+```
+
+#MEMBUAT DENDOGRAM
+Ketika menggunakan R, untuk membuat dendogram cukup dengan menggunakan fungsi plot(); sedangkan ketika menghitung manual dengan cara membuat plot antara objek/pengamatan dan mengubungkannya ketika antar objek/pengamatan tergabung menjadi satu klaster berdasarkan jarak minimum yang telah dihitung.
+```{r}
+plot(hc_single, hang = -1) #Menampilkan Dendogram
+```
+
+#Metode 2. Complete Linkage
+Untuk melakukan metode Single Linkage, dalam R dapat menggunakan fungsi hclust() kemudian memasukkan argument ‘complete’ pada parameter ‘method’.
+```{r}
+hc_complete <- hclust(d = d, method = "complete")
+hc_complete
+```
+
+#MEMBUAT DENDOGRAM
+Ketika menggunakan R, untuk membuat dendogram cukup dengan menggunakan fungsi plot(); sedangkan ketika menghitung manual dengan cara membuat plot antara objek/pengamatan dan mengubungkannya ketika antar objek/pengamatan tergabung menjadi satu klaster berdasarkan jarak minimum yang telah dihitung.
+```{r}
+plot(hc_complete, cex = 0.6, hang = -1) #Menampilkan Dendogram
+abline(h = 4, col = 'red')
+```
+
+#Metode 3. Average Linkage
+Untuk melakukan metode Single Linkage, dalam R dapat menggunakan fungsi hclust() kemudian memasukkan argument ‘average’ pada parameter ‘method’.
+```{r}
+hc_average <- hclust(d = d, method = "average")
+hc_average
+```
+
+#MEMBUAT DENDOGRAM
+Ketika menggunakan R, untuk membuat dendogram cukup dengan menggunakan fungsi plot(); sedangkan ketika menghitung manual dengan cara membuat plot antara objek/pengamatan dan mengubungkannya ketika antar objek/pengamatan tergabung menjadi satu klaster berdasarkan jarak minimum yang telah dihitung.
+```{r}
+plot(hc_average, hang =-1)#menampilkan Dendogram
+```
+
+### Menghitung menggunakan fucntion agnes 
+Kedua fungsi ini sangat mirip (hclust dan agnes) namun, dengan fungsi agnes kita juga bisa mendapatkan koefisien aglomeratif, yang mengukur jumlah struktur pengelompokan yang ditemukan (nilai lebih dekat ke 1 menyarankan struktur pengelompokan yang kuat).
+
+### Koefisien Aglomeratif
+```{r}
+hc2$ac
+```
+### membandingkan beberapa metode aglomeratif
+
+# membuat vector untuk membandingkan metode aglomeratif
+```{r}
+m <- c( "average", "single", "complete")
+names(m) <- c( "average", "single", "complete")
+```
+
+# membuat fungsi untuk menghitung koefisien
+# import library purrr untuk melakukan iterasi
+```{r}
+library(purrr)
+ac <- function(x) {
+    agnes(dataHirarki, method = x)$ac
+}
+map_dbl(m, ac)
+```
+
+## dari hasil perbandingan diatas didapat metode complete memiliki koefisien aglomeratif yang lebih tinggi dibandingkan metode lainnya
+
+# berikut dendogramnya
+```{r}
+hc3 <- agnes(d, method = "complete")
+pltree(hc3, cex = 0.6, hang = -1, main = "Dendrogram of agnes")
+```
+
+
+
+
+
