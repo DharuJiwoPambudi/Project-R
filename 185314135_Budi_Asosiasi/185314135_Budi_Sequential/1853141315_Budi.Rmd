@@ -1,0 +1,152 @@
+---
+title: "Sequential"
+author: "185314135_DharuJiwoPambudi"
+date: "25/3/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+
+#Import Library
+```{r}
+library(dplyr);
+```
+
+```{r}
+library(tidyverse)
+```
+
+```{r}
+library(arulesSequences)
+```
+
+#Import Data
+{r}
+
+#Import standard transaction data
+```{r}
+transactions = read.csv("datasequential.csv",sep=";")
+```
+
+
+```{r}
+transactions$Invoice <- as.Date(transactions$InvoiceDate)
+transactions
+```
+
+
+#Start time of data to be considered
+{r}
+```{r}
+start_month <- "2021-03-01"
+```
+
+
+#Create list by customer ID and InvoiceDate (formatted dates)
+{r}
+```{r}
+trans_sequence <- transactions %>%
+    group_by(CustomerID, InvoiceDate) %>%
+    summarize(
+        SIZE = n(),
+        ItemSet = paste(as.character(StockCode), collapse = ';')
+    )
+```
+
+
+
+
+#Make event and sequence IDs into factors
+{r}
+```{r}
+elapsed_months <- function(end_date, start_date) {
+    ed <- as.POSIXlt(end_date)
+    sd <- as.POSIXlt(start_date)
+    12 * (ed$year - sd$year) + (ed$mon - sd$mon)
+}
+```
+```{r}
+#trans_sequence$eventID <- elapsed_months(trans_sequence$InvoiceDate, start_month)
+trans_sequence$eventID <- trans_sequence$InvoiceDate
+```
+
+
+
+
+#Mengubah urutan tampilan
+
+```{r}
+trans_sequence = trans_sequence[,c(1,5,3,4)]
+names(trans_sequence) = c("sequenceID", "eventID", "SIZE", "items")
+
+trans_sequence <- data.frame(lapply(trans_sequence, as.factor))
+trans_sequence <- trans_sequence[order(trans_sequence$sequenceID, trans_sequence$eventID),]
+
+trans_sequence
+```
+
+
+#Convert to transaction matrix data type
+{r}
+```{r}
+write.table(trans_sequence, "mytxtout.txt", sep=";", row.names = FALSE, col.names = FALSE, quote = FALSE)
+
+```
+
+
+{r}
+```{r}
+trans_matrix <- read_baskets("mytxtout.txt", sep = ";", info = c("sequenceID","eventID","SIZE"))
+
+trans_matrix
+
+inspect(trans_matrix)
+```
+
+
+
+#Penggunaan algoritme SPADE
+{r}
+freq1 <- cspade(trans_matrix, parameter = list(support = 0.3), control = list(verbose = TRUE))
+
+{r}
+freq1.df <- as(freq1, "data.frame")
+freq1.df
+
+
+#Menampilkan rule
+{r}
+r1 <- as(ruleInduction(freq1, confidence = 0.5, control = list(verbose = TRUE)), "data.frame")
+r1
+
+#Membaca
+
+```{r}
+trans_matrix1 <- read_baskets("datasequentiall.txt", sep = ";", info = c("sequenceID","eventID","SIZE"))
+
+
+inspect(trans_matrix1)
+```
+
+##Mencari Spade
+```{r}
+freq1 <- cspade(trans_matrix1, parameter = list(support = 0.4), control = list(verbose = TRUE))
+
+freq1.df <- as(freq1, "data.frame")
+freq1.df
+```
+
+#Menampilkan rule
+```{r}
+r1 <- as(ruleInduction(freq1, confidence = 0.5, control = list(verbose = TRUE)), "data.frame")
+r1
+```
+
+
+
+

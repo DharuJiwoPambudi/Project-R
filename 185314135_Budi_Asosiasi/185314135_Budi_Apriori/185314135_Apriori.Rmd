@@ -1,0 +1,432 @@
+---
+title: "Aturan Asosiasi Apriori"
+author: "185314135_DharuJiwoPambudi"
+date: "18/3/2021"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Package
+Package yang digunakan untuk mencari aturan asosiasi menggunakan Apriori adalah **arules**. Untuk melakukan visualisasi aturan yang diperoleh menggunakan package **arulesVis**. Arules merupakan singkatan dari **association rules** 
+
+
+```{r}
+library(arules)
+
+```
+
+
+## Dataset
+Pada pertemuan sebelumnya telah dilakukan proses pembacaan data dari file menghasilkan data.frame, akan tetapi cukup menyulitkan ketika data.frame akan digunakan untuk proses pencarian aturan asosiasi. 
+
+Terdapat tipe data lain yang dapat memudahkan yaitu **transactions** dan berasal dari package arules. Dataset dibaca menggunakan fungsi **read.transactions**. 
+
+Terdapat contoh **Data1** sebagai berikut :
+
+TID    Item
+
+#1       A
+
+#1       C
+
+#1       D
+
+#2       B
+
+#2       C
+
+#2       E
+
+#3       A
+
+#3       B
+
+#3       C
+
+#3       E
+
+#4       B
+
+#4       E
+
+
+Terdapat contoh **Data2** sebagai berikut :
+
+A,C,D
+
+B,C,E
+
+A,B,C,E
+
+B,E
+
+
+```{r}
+## Membaca data1 menggunakan read.transactions dan disimpan menggunakan variabel data_trans1
+data_trans1 <- read.transactions(file="data1.txt", format="single",header=FALSE,sep="",cols = c(1,2))
+
+## untuk menampilkan hasil --> inspect dari arules
+inspect(data_trans1)
+```
+
+```{r}
+## Membaca data2 menggunakan read.transactions dan disimpan menggunakan variabel data_trans2
+data_trans2 <- read.transactions(file="data2.txt",sep=",")
+## untuk menampilkan hasil --> inspect dari arules
+inspect(data_trans2)
+
+data_trans2
+```
+
+### Keterangan untuk read.transactions ###
+Keterangan code:
+
+1. **File** : Parameter lokasi file yang bisa berasal dari url di web atau lokal. Pada contoh ini dibaca file data_ar1.txt 
+
+2. **format**: Format bisa "single" atau "basket".
+
+"single" artinya tiap item transaksi dituliskan terpisah baris demi baris, dan ini cocok dengan format data_ar1.txt
+
+"basket" artinya seluruh item per transaksi ditulis per baris (data_ar2.txt)
+
+3. **sep**: separator character atau karakter pemisah antar kolom,
+
+4. **cols** : indeks dari kolom-kolom yang digunakan. Untuk format single maka kolom harus dua saja, kolom pertama adalah kode transaksi sedangkan kolom kedua menunjukkan item transaksi. Penulisan c(1,2) pada contoh  artinya kolom pertama dan kedua yang digunakan.
+
+5.	**skip**: jumlah baris yang dilewati sebelum mulai membaca data. Untuk dataset data_ar1.txt, baris pertama adalah header dan tidak diperlukan, jadi kita masukkan 1 sebagai input.
+
+Saat hasil read.transactions dipanggil (data_trans1 / data_trans2) akan menghasilkan informasi :
+
+1. **transactions in sparse format**: Ini artinya transaksi dalam bentuk sparse (tersebar). Akan lebih jelas jika divisualisasikan dalam bentuk matrix
+
+2. **4 transactions (rows)**: dataset memiliki total 4 transaksi. Ada informasi rows atau baris disini, ini bukan berarti data ada 4 baris karena pada kenyataannya memiliki 12 baris data (pada file data1)
+
+3.**5 items (columns)**: dataset secara total memiliki 5 item unik.
+
+
+## Explore data transaksi
+Karena hasil data transaksi antara data1 dan data2 adalah sama, maka akan digunakan salah satu saja. Yaitu data_trans1.
+
+### Menampilkan daftar item dalam transaksi
+Untuk menampilkan daftar item menggunakan komponen **itemInfo** dengan aksesor @ atau lengkapnya ditulis **@itemInfo**. Komponen ini berfungsi untuk melihat daftar unik item yang ada pada transaksi
+```{r}
+##Menampilkan daftar item
+data_trans1@itemInfo
+data_trans2@itemInfo
+```
+
+### Menampilkan daftar kode transaksi
+Untuk menampilkan daftar kode transaksi menggunakan komponen **itemsetInfo** dengan aksesor @ atau lengkapnya ditulis **@itemsetInfo**. Komponen ini bermanfaat untuk melakukan validasi terhadap data dalam dataset.
+
+```{r}
+##Menampilkan daftar kode transaksi
+data_trans1@itemsetInfo
+```
+
+### Menampilkan Transaksi dalam bentuk matrix
+Sebaran item dalam keseluruhan transaksi akan sulit jika ditampilkan dalam bentuk daftar output berupa teks dan akan terasa panjang. Salah satu solusinya sebaran data ditampilkan dalam bentuk matrix dua dimensi. Baris merupakan item, sedangkan kolom adalah index transaksi transaksinya. Matrix dari object transactions menggunakan komponen  **data**  menggunakan aksesor @, ditulis lengkap sebagai **@data**
+```{r}
+## Menampilkan data
+data_trans1@data
+```
+
+Perhatikan hasilnya, berikut penjelasan dari hasil :
+
+1. 5 x 4 sparse Matrix of class "ngCMatrix"
+
+2. [1,] sd [5,] artinya index yang mewakili tiap item dalam transaksi. Index menunjukan urutan dari hasil "menampilkan daftar item dalam transaksi"
+
+item A diwakili [1,], item E diwakili item [5,]:
+simbol . menunjukan item tidak ada dalam transaksi
+simbol | menunjukan item ada di transaksi
+
+Perhatikan hasil nya :
+
+[1,] | . | .
+[2,] . | | |
+[3,] | | | .
+[4,] | . . .
+[5,] . | | |
+
+untuk [1,] sebagai item A ada pada transaksi 1,3 (ditandai |). Cek apakah benar item A ada pada transaksi 1 dan 3 ?
+
+```{r}
+data_ar1 <- read.csv(file="data_ar1.txt",sep="")
+data_ar1
+  
+```
+
+## Jumlah kemunculan item dalam transaksi (Item Frequency)
+Jumlah kemunculan item dalam seluruh transaksi dinamakan **Item frequency** atau dikenal juga dengan **support** Untuk menghasilkan informasi ini menggunakan fungsi **itemFrequency**, inputnya adalah object dari transaksi (data_trans1). Fungsi itemFrequency ini sangat penting untuk membantu menganalisa transaksi yang lebih kompleks, terutama jika item yang terlibat lebih banyak dan transaksi yang besar.
+
+
+
+```{r}
+## Menampilkan item Frequency
+itemFrequency(data_trans1)
+```
+
+Hasil akan memperlihatkan frequency kemunculan item A yaitu 0.5 artinya 50 persen dari keseluruhan transaksi, item B 0.75 dst.
+
+Jika akan menampilkan bukan persentase tetapi nilai absolut maka menggunakan tambahan parameter **type=absolute**. Atau dalam konteks ARM adalah nilai **support count**
+
+
+```{r}
+## Menampilkan nilai absolute dari item frequency
+itemFrequency(data_trans1,type="absolute")
+```
+
+Hasil akan memperlihatkan nilai A = 2, artinya A muncul dalam 2 kali dari keseluruhan transaksi yang ada.
+
+
+## Statistik TOP 3 
+Statistik sederhana untuk menjawab pertanyaan seperti "Tampilkan item yang memiliki jumlah terbanyak di seluruh transaksi ? ". "Tampilkan 3 item yang jumlahnya terbanyak ?
+
+Untuk menjawab pertanyaan tersebut dapat menggunakan fungsi **sort**
+
+```{r}
+## tampilkan itemFrequency dalam bentuk absolute, simpan dalam variable data1_item
+
+data1_item <-itemFrequency(data_trans1,type="absolute")
+
+## Gunakan fungsi sort untuk mengurutkan item dari jumlah terbesar ke terkecil
+    
+##data1_item 
+data1_item <- sort(data1_item)
+data1_item
+data1_item <- sort(data1_item,decreasing = TRUE)
+data1_item
+##data1_item
+
+## menampilkan 3 item tertinggi --> gunakan index [1:3]
+data1_item <- data1_item[1:3]
+data1_item
+#data1_item <- sort(data1_item,decreasing = TRUE[1:3])
+##data1_item 
+##data1_item
+
+
+## Konversi hasil dalam bentuk data frame dengan kolom Nama_produk dan Jumlah untuk 3 item terbanyak
+
+data1_item <- data.frame("Nama Produk"=names(data1_item), "Jumlah"=data1_item, row.names=NULL)
+
+data1_item
+
+
+## Simpan hasil dalam bentuk file beri nama "top3_item"
+
+write.csv(data1_item, file="top3_item.txt", eol = "\r\n")
+
+
+```
+
+
+## Plotting Frequent Item
+
+Selain tampilan dalam bentuk matrix, dapat ditampilkan dalam bentuk grafik. Untuk melihat distribusi item dalam seluruh transaksi. Menggunakan fungsi **itemFrequencyPlot**
+
+
+```{r}
+##  menampilkan grafik item frequency
+itemFrequencyPlot(data_trans1)
+
+```
+```{r}
+itemFrequencyPlot(data_trans1,type="absolute")
+```
+```{r}
+itemFrequencyPlot(sort(data_trans1,decreasing = FALSE))
+
+```
+
+
+## Pencarian Aturan
+
+Untuk mendapatkan aturan, menggunakan fungsi **apriori** dari package  arules.
+
+### Menampilkan kombinasi item dengan nilai minsupport tertentu ###
+
+Untuk menampilkan kombinasi dari item (L) dari transaksi dengan nilai minsupport tertentu, menggunakan paramater yang ada pada fungsi apriori. Beberapa parameter  yang ada pada fungsi apriori adalah :
+
+1. support
+
+2. confidence
+
+3. minlen (minimum length)
+
+4. target --> frequent itemsets atau rules
+
+```{r}
+## tampilkan dengan parameter support = 0.5; target = frequent itemsets
+freq1 <- inspect(apriori(data_trans1,parameter = list(support=0.5, target="frequent itemsets")))
+
+```
+
+
+### Mendapatkan aturan ###
+Aturan merupakan formula untuk menyatakan kombinasi dari dua itemset. Satu itemset disisi kiri (left hand side) dan satu itemset disisi kanan (right hand side)
+
+{itemset lhs} => {itemset rhs}
+
+Untuk menghasilkan rule menggunakan fungsi **apriori** 
+
+
+```{r}
+## Menggunakan fungsi apriori
+aturan <- apriori(data_trans1)
+
+## Menampilkan hasil
+
+inspect(aturan)
+
+
+```
+
+Diperoleh 16 aturan dengan ditampilkan pula parameter untuk pengukuran yaitu support, confidence,  dan lift
+
+
+### Filter Aturan
+
+Dari hasil inspect(aturan) kemungkinan terdapat aturan-aturan yang tidak menarik. Untuk mendapatkan aturan yang menarik dapat memanfaatkan filter atau subsetting dari rule. Cara yang dapat digunakan adalah menggunakan **inspect, subset** dan operator **%in%**.
+
+#### **Memfilter RHS**
+Format untuk menfilter RHS :
+
+inspect(subset(rules,rhs %in% teks_atau_vector_tekst_yang_mewakili_item))
+
+```{r}
+## Menfilter RHS yang mengandung item E
+
+inspect(subset(aturan,rhs %in% "E"))
+
+```
+#### **Memfilter LHS**
+Format untuk menfilter LHS :
+
+inspect(subset(rules,lhs %in% teks_atau_vector_tekst_yang_mewakili_item))
+
+```{r}
+## Menfilter LHS yang mengandung item A
+
+inspect(subset(aturan,lhs %in% "A"))
+
+```
+
+#### **Memfilter LHS dan RHS
+
+Jika akan menggunakan kedua sisi, gunakan operator **& untuk AND dan | untuk OR**
+
+```{r}
+## Filter untuk lhs = item A dan rhs = item E
+inspect(subset(aturan,rhs %in% "E"&lhs %in% "A"))
+
+```
+
+
+## Pattern Evaluation 
+
+###  Menghasilkan aturan dengan parameter support dan confidence
+
+Untuk menghasilkan aturan dengan parameter support dan confidence maka dapat ditambahakan parameter untuk memfilter aturan yang diinginkan.
+Format nya adalah :
+
+**apriori(data_tran1, parameter=list(supp=0.5, confidence=0.8))**
+```{r}
+## Menghasilkan aturan dengan parameter support dan confidence
+rule <- apriori(data_trans1, parameter=list(supp=0.5, confidence=0.8))
+## Tampilkan hasilnya
+inspect(rule)
+
+```
+###  Memfilter aturan dengan lift
+
+Dapat dilakukan filter kualitas dari aturan asosiasi dari nilai pengukurannya.  Karena berupa angka, maka operatornya menggunakan perbandingan angka.
+Misal hendak ditampilan aturan yang memiliki kriteria sebagai berikut:
+
+1. lhs atau rhs mengandung "E"
+
+2. lift > 1
+
+maka :
+
+subset(aturan,(lhs %in% "E" | rhs %in% "E") & lift > 1)
+
+```{r}
+##1. lhs atau rhs mengandung "E"
+
+##2. lift > 1
+inspect(subset(aturan,(lhs %in% "E" | rhs %in% "E") & lift > 1))
+
+```
+
+
+###  Memfilter aturan dengan %ain%
+
+Operator %in% yang sebelumnya sudah efektif. Namun operator ini tidak cocok jika kita ingin melakukan filter itemset dengan logika AND. Artinya seluruh item harus muncul dalam itemset yang terpilih. 
+
+Untuk keperluan tersebut, gunakan operator **%ain%**.
+
+Contoh subset yang menggunakan %ain% adalah sebagai berikut.
+
+subset(aturan,(lhs %ain% c("A","E")))
+
+```{r}
+## Menampilkan aturan yang lhs mengandung A dan E
+inspect(subset(aturan,(lhs %ain% c("A","E"))))
+
+```
+
+## Visualisasi Rules dengan Graph
+
+Untuk membuat visualisasi aturan, dapat memanfaatkan package **arulesVis**
+
+Ada banyak method dari visualisasi nya yaitu :
+
+1. graph
+
+2. scatter plot
+
+3. grouped
+
+4. paracoord
+
+Demikian juga untuk control terhadap grafiknya. 
+
+
+```{r}
+## Menggunakan graph
+
+library(arulesViz)
+library(magrittr)
+aturan %>% plot(method="graph")
+
+## atau dapat dengan cara
+
+plot(aturan,method="graph")
+
+```
+
+
+```{r}
+## Menggunakan scatterplot
+plot(aturan,method="scatterplot")
+
+
+```
+
+```{r}
+## Menggunakan grouped
+plot(aturan,method = "grouped")
+```
+
+```{r}
+## Menambahkan control
+
+plot(aturan,method="graph",control=list(layout=igraph::with_fr()))
+
+```
